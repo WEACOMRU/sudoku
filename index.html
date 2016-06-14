@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Судоку</title>
+    <link rel="stylesheet" href="css/sudoku.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="js-sudoku"></div>
+    <script src="js/lib/zepto.min.js"></script>
+    <script src="js/sudoku.js"></script>
+    <script>
+        Sudoku.init({
+            target: '.js-sudoku',
+            size: 3
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "Sudoku",
+  "version": "0.0.0",
+  "description": "Play Sudoku",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "game",
+    "javascript",
+    "html",
+    "sudoku"
+  ],
+  "author": "bashkos <bashkos@gmail.com>",
+  "license": "MIT",
+  "dependencies": {}
+}
