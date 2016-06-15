@@ -32,7 +32,7 @@ var Sudoku = (function () {
         },
 
         shuffle = function (array) {
-            array.sort(function () {
+            return array.sort(function () {
                 return .5 - Math.random();
             });
         },
@@ -141,25 +141,85 @@ var Sudoku = (function () {
         },
 
         generateCandidates = function (settings, gameMap, cell) {
-            var segmentSize = Math.pow(settings.size, 2),
+            var segmentLength = Math.pow(settings.size, 2),
                 candidates = [],
-                i;
+                i, j;
 
-            for (i = 0; i < segmentSize; i++) {
-                candidates = i + 1;
+            for (i = 0; i < segmentLength; i++) {
+                candidates.push(i + 1);
             }
 
-            //for (i = cell - cell % segmentSize; i < cell; i++) {
-            //
-            //}
+            for (i = cell - cell % segmentLength; i < cell; i++) {
+                for (j = 0; j < candidates.length; j++) {
+                    if (gameMap[i].value === candidates[j]) {
+                        candidates.splice(j, 1);
+                        j = candidates.length;
+                    }
+                }
+            }
+
+            return shuffle(candidates);
+        },
+
+        checkSell = function (settings, gameMap, cell) {
+            var segmentLength = Math.pow(settings.size, 2),
+                startSegment,
+                startSegmentCell,
+                valid = true,
+                i, j, k;
+
+            /* Обход строк */
+            startSegment = Math.floor(Math.floor(cell / segmentLength) / settings.size) * settings.size;
+            startSegmentCell = Math.floor(cell % segmentLength / settings.size) * settings.size;
+            k = 0;
+
+            for (i = 0; i < settings.size && k < cell && valid; i++) {
+                for (j = 0; j < settings.size && k < cell && valid; j++) {
+                    k = (startSegment + i) * segmentLength + startSegmentCell + j;
+                    
+                    if (k < cell && gameMap[k].value === gameMap[cell].value) {
+                        valid = false;
+                    }
+                }
+            }
+
+            /* Обход столбцов */
+            startSegment = Math.floor(cell / segmentLength) % settings.size;
+            startSegmentCell = cell % settings.size;
+            k = 0;
+
+            for (i = 0; i < settings.size && k < cell && valid; i++) {
+                for (j = 0; j < settings.size && k < cell && valid; j++) {
+                    k = (startSegment + settings.size * i) * segmentLength + startSegmentCell + settings.size * j;
+
+                    if (k < cell && gameMap[k].value === gameMap[cell].value) {
+                        valid = false;
+                    }
+                }
+            }
+
+            return valid;
         },
 
         setCell = function (settings, gameMap, cell) {
+            var valid = false;
+
             gameMap[cell] = gameMap[cell] || {};
 
-            if (typeof gameMap[cell].candidates === 'undefined') {
+            if (typeof gameMap[cell].candidates === 'undefined' || gameMap[cell].candidates === null) {
                 gameMap[cell].candidates = generateCandidates(settings, gameMap, cell);
             }
+
+            while (gameMap[cell].candidates.length && !valid) {
+                gameMap[cell].value = gameMap[cell].candidates.shift();
+                valid = checkSell(settings, gameMap, cell);
+            }
+
+            if (!valid) {
+                gameMap[cell] = {};
+            }
+
+            return valid;
         },
 
         generateMap = function (settings, gameMap, cell) {
@@ -167,22 +227,38 @@ var Sudoku = (function () {
                 return false;
             }
 
-            if (cell > Math.pow(settings.size, 4)) {
+            if (cell === Math.pow(settings.size, 4)) {
                 return true;
             }
 
             if (setCell(settings, gameMap, cell)) {
                 generateMap(settings, gameMap, cell + 1);
             } else {
-
+                generateMap(settings, gameMap, cell - 1)
             }
         },
 
+        fillMap2 = function ($target, settings, gameMap) {
+            var $ = window.jQuery || window.Zepto || window.Dom7,
+                segmentLength = Math.pow(settings.size, 2);
+
+            /* Расстановка элементов */
+            $('.' + settings.css.block, $target).each(function (segment) {
+                var $segment = $(this);
+                $('.' + settings.css.cell, $segment).each(function (cell) {
+                    var $cell = $(this);
+
+                    $cell.text(gameMap[segment * segmentLength + cell].value);
+                });
+            });
+        },
+
         generate2 = function ($target, settings) {
-            var gameMap = {},
-                i;
+            var gameMap = [];
 
+            generateMap(settings, gameMap, 0);
 
+            fillMap2($target, settings, gameMap);
         },
 
         createElements = function ($target, settings) {
@@ -239,7 +315,8 @@ var Sudoku = (function () {
             $target = $(settings.target);
 
             createElements($target, settings);
-            generate($target, settings);
+            //generate($target, settings);
+            generate2($target, settings);
         };
 
     return {
