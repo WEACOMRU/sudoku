@@ -1,7 +1,8 @@
 .sudoku {
     margin: 0 auto 20px;
-    width: 800px;
-    height: 800px;
+    position: relative;
+    width: 600px;
+    height: 600px;
     font-family: sans-serif;
     background: #fff;
 }
@@ -12,15 +13,15 @@
     display: block;
 }
 
-.sudoku_block {
+.sudoku_segment {
     padding: 11px;
     float: left;
-    font-size: 18px;
+    font-size: 12px;
     box-sizing: border-box;
     box-shadow: inset 1px 1px 0 #111, 1px 1px 0 #111;
 }
 
-.sudoku_block:after {
+.sudoku_segment:after {
     content: '';
     clear: both;
     display: block;

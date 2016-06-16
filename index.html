@@ -11,10 +11,14 @@
     <script src="js/lib/zepto.min.js"></script>
     <script src="js/sudoku.js"></script>
     <script>
-        Sudoku.init({
-            target: '.js-sudoku',
-            size: 5
-        });
+        try {
+            Sudoku.init({
+                target: '.js-sudoku',
+                size: 3
+            });
+        } catch (e) {
+            console.log('Can\'t start the game');
+        }
     </script>
 </body>
 </html>

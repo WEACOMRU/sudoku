@@ -5,11 +5,21 @@ var Sudoku = (function () {
         defaults = {
             css: {
                 target: 'sudoku',
-                block: 'sudoku_block',
+                segment: 'sudoku_segment',
                 cell: 'sudoku_cell'
             },
             size: 3
         },
+
+        $ = (function () {
+            var $$ = window.jQuery || window.Zepto || window.Dom7;
+
+            if ($$) {
+                return $$;
+            } else {
+                throw 'jQuery-compatible library needed';
+            }
+        })(),
 
         checkSetting = function (settings) {
             if (!settings.method) {
@@ -101,19 +111,19 @@ var Sudoku = (function () {
                 var gameMap = [[]],
                     candidates,
                     halfSize = Math.floor(settings.size / 2),
-                    i, j, k,
+                    i, j,
                     iRand, jRand,
 
-                    generateRow = function (settings) {
-                        var row = [],
+                    generateCandidates = function (settings) {
+                        var candidates = [],
                             segmentLength = Math.pow(settings.size, 2),
                             i;
 
                         for (i = 0; i < segmentLength; i++) {
-                            row[i] = i + 1;
+                            candidates[i] = i + 1;
                         }
 
-                        return arrayUtils.shuffle(row);
+                        return arrayUtils.shuffle(candidates);
                     },
 
                     checkCol = function (gameMap, col, value) {
@@ -129,21 +139,22 @@ var Sudoku = (function () {
                         return valid;
                     },
 
-                    fillMap = function ($target, settings, gameMap) {
-                        var $blockSet = $('.' + settings.css.block, $target),
-                            $cellSet,
-                            i, j, iMap, jMap;
+                    generateValidRow = function (settings, gameMap, row) {
+                        var candidates = generateCandidates(settings),
+                            segmentLength = Math.pow(settings.size, 2),
+                            i, j;
 
-                        for (i = 0; i < settings.size * settings.size; i++) {
-                            $cellSet = $('.' + settings.css.cell, $blockSet.eq(i));
-                            for (j = 0; j < settings.size * settings.size; j++) {
-                                iMap = Math.floor(i / settings.size) * settings.size + Math.floor(j / settings.size);
-                                jMap = (i % settings.size) * settings.size + j % settings.size;
-                                if (gameMap[iMap][jMap]) {
-                                    $cellSet.eq(j)
-                                        .text(gameMap[iMap][jMap])
-                                        .addClass('__disabled');
+                        gameMap[row] = [];
+                        for (i = 0; i < segmentLength; i++) {
+                            for (j = 0; j < candidates.length && !gameMap[row][i]; j++) {
+                                if (checkCol(gameMap, i, candidates[j])) {
+                                    gameMap[row][i] = candidates[j];
+                                    candidates.splice(j, 1);
                                 }
+                            }
+                            /* Перезапуск генерации строки */
+                            if (!gameMap[row][i]) {
+                                generateValidRow(settings, gameMap, row);
                             }
                         }
                     },
@@ -170,30 +181,34 @@ var Sudoku = (function () {
                         }
 
                         return pair;
+                    },
+
+                    fillMap = function ($target, settings, gameMap) {
+                        var $segmentSet = $('.' + settings.css.segment, $target),
+                            $cellSet,
+                            i, j, iMap, jMap;
+
+                        for (i = 0; i < settings.size * settings.size; i++) {
+                            $cellSet = $('.' + settings.css.cell, $segmentSet.eq(i));
+                            for (j = 0; j < settings.size * settings.size; j++) {
+                                iMap = Math.floor(i / settings.size) * settings.size + Math.floor(j / settings.size);
+                                jMap = (i % settings.size) * settings.size + j % settings.size;
+                                if (gameMap[iMap][jMap]) {
+                                    $cellSet.eq(j)
+                                        .text(gameMap[iMap][jMap])
+                                        .addClass('__disabled');
+                                }
+                            }
+                        }
                     };
 
                 /* Заполнение первой строки массива */
-                gameMap[0] = generateRow(settings);
+                gameMap[0] = generateCandidates(settings);
 
                 /* Заполнение оставшихся строк массива */
                 for (i = 0; i < Math.pow(settings.size, 2); i += settings.size) {
                     if (i > 0) {
-                        gameMap[i] = [];
-                        candidates = generateRow(settings);
-                        for (j = 0; j < Math.pow(settings.size, 2); j++) {
-                            for (k = 0; k < candidates.length && !gameMap[i][j]; k++) {
-                                if (checkCol(gameMap, j, candidates[k])) {
-                                    gameMap[i][j] = candidates[k];
-                                    candidates.splice(k, 1);
-                                }
-                            }
-                            /* Перезапуск генерации строки */
-                            if (!gameMap[i][j]) {
-                                gameMap[i] = [];
-                                candidates = generateRow(settings);
-                                j = -1;
-                            }
-                        }
+                        generateValidRow(settings, gameMap, i);
                     }
 
                     for (j = 1; j < settings.size; j++) {
@@ -329,10 +344,9 @@ var Sudoku = (function () {
                     },
 
                     fillMap = function ($target, settings, gameMap) {
-                        var $ = window.jQuery || window.Zepto || window.Dom7,
-                            segmentLength = Math.pow(settings.size, 2);
+                        var segmentLength = Math.pow(settings.size, 2);
 
-                        $('.' + settings.css.block, $target).each(function (segment) {
+                        $('.' + settings.css.segment, $target).each(function (segment) {
                             var $segment = $(this);
                             $('.' + settings.css.cell, $segment).each(function (segmentCell) {
                                 var $cell = $(this),
@@ -354,8 +368,7 @@ var Sudoku = (function () {
         },
 
         createElements = function ($target, settings) {
-            var $ = window.jQuery || window.Zepto || window.Dom7,
-                $block,
+            var $segment,
                 $cell,
                 percentSize,
                 fontSize,
@@ -367,7 +380,7 @@ var Sudoku = (function () {
             fontSize = .3 + Math.exp(-settings.size) * 50;
 
             for (i = 0; i < settings.size * settings.size; i++) {
-                $block = $('<div/>');
+                $segment = $('<div/>');
 
                 for (j = 0; j < settings.size * settings.size; j++) {
                     $cell = $('<div/>');
@@ -378,29 +391,22 @@ var Sudoku = (function () {
                             fontSize: fontSize + 'em'
                         })
                         .addClass(settings.css.cell);
-                    $block.append($cell);
+                    $segment.append($cell);
                 }
 
-                $block
+                $segment
                     .css({
                         width: percentSize + '%',
                         height: percentSize + '%'
                     })
-                    .addClass(settings.css.block);
-                $target.append($block);
+                    .addClass(settings.css.segment);
+                $target.append($segment);
             }
         },
 
         init = function (options) {
-            var $ = window.jQuery || window.Zepto || window.Dom7,
-                settings,
+            var settings,
                 $target;
-
-            if (!$) {
-                /* TODO throw */
-                console.error('jQuery-compatible library needed');
-                return false;
-            }
 
             settings = checkSetting($.extend(true, {}, defaults, options));
 
