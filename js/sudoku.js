@@ -31,7 +31,6 @@ var Sudoku = (function () {
                     k;
 
                 if (i !== j) {
-                    console.log('Swap rows: ' + i + ' - ' + j);
                     for (k = 0; k < array[i].length; k++) {
                         buffer = array[i][k];
                         array[i][k] = array[j][k];
@@ -47,7 +46,6 @@ var Sudoku = (function () {
                     k;
 
                 if (i !== j) {
-                    console.log('Swap cols: ' + i + ' - ' + j);
                     for (k = 0; k < array.length; k++) {
                         buffer = array[k][i];
                         array[k][i] = array[k][j];
@@ -168,7 +166,6 @@ var Sudoku = (function () {
                             pair = methods[mode](settings, value);
                         }
                         if (pair === value) {
-                            console.log('Regenerate pair for ' + value);
                             pair = generatePair(settings, value, mode);
                         }
 
@@ -211,11 +208,8 @@ var Sudoku = (function () {
                        одинаковый набор значений */
                     iRand = Math.floor(Math.random() * i * settings.size);
                     jRand = generatePair(settings, iRand, 'map');
-                    console.log('Try to swap cols: ' + iRand + ' - ' + jRand);
                     arrayUtils.swapCols(gameMap, iRand, jRand);
                 }
-
-                console.log('/* --- End of statement --- */');
 
                 for (i = 0; i < settings.size; i++) {
                     /* Для каждого сегмента выполним несколько манипуляций
@@ -225,9 +219,7 @@ var Sudoku = (function () {
                            строки и столбцы */
                         iRand = i * settings.size + Math.floor(Math.random() * settings.size);
                         jRand = generatePair(settings, iRand, 'segment');
-                        console.log('Try to swap cols: ' + iRand + ' - ' + jRand);
                         arrayUtils.swapCols(gameMap, iRand, jRand);
-                        console.log('Try to swap rows: ' + iRand + ' - ' + jRand);
                         arrayUtils.swapRows(gameMap, iRand, jRand);
                     }
                 }
